@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 
@@ -38,24 +39,29 @@ public class AccountsService {
 
     try {
       sourceAcct = accountsRepository.getAccount(fromAccId);
-      log.info("source account info is" + sourceAcct.getAccountId() + " balance is " + sourceAcct.getBalance());//fixme if we get time it will get replaced with logger
+      if(StringUtils.isEmpty(sourceAcct))
+        throw new AccountException(String.valueOf("User account id " + fromAccId + ", does not exist!"));
+
+      log.info("source account info is" + sourceAcct.getAccountId() + " balance is " + sourceAcct.getBalance());
     } catch (Exception exp) {
       throw new AccountException(String.valueOf("User account id " + fromAccId + ", does not exist!"));
     }
 
     try {
       destAcct = accountsRepository.getAccount(toAccId);
-      log.info("destination account info is " + destAcct.getAccountId() + " balance is " + destAcct.getBalance());//fixme if we get time it will get replaced with logger
+      if(StringUtils.isEmpty(destAcct))
+        throw new AccountException(String.valueOf("User account id " + toAccId + ", does not exist!"));
+      info.info("destination account info is " + destAcct.getAccountId() + " balance is " + destAcct.getBalance());
     } catch (Exception exp) {
       throw new AccountException(String.valueOf("User account id " + toAccId + ", does not exist!"));
     }
 
-    if (sourceAcct.getBalance().compareTo(BigDecimal.ZERO) > 0 && sourceAcct.getBalance().compareTo(value) > 0) {
+    if (sourceAcct.getBalance().compareTo(BigDecimal.ZERO) > 0 && sourceAcct.getBalance().compareTo(value) >= 0) {
       accountsRepository.withdraw(fromAccId, sourceAcct, value);
       accountsRepository.deposit(toAccId, destAcct, value);
     } else {
       final String msg = String.valueOf(fromAccId + " your account does not have sufficient balance to transfer");
-      log.info(msg);//fixme replace it with logger
+      log.info(msg);
       throw new BalanceTransferException(msg);
     }
 
