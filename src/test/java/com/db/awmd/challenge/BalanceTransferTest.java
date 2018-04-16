@@ -19,6 +19,10 @@ import org.springframework.web.context.WebApplicationContext;
 import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
 @RunWith(SpringRunner.class)
@@ -135,6 +139,24 @@ public class BalanceTransferTest {
         BigDecimal trfAmount = new BigDecimal("1500");
         this.accountsService.transfer(account.getAccountId(),account1.getAccountId(),trfAmount);
 
+    }
+
+    @Test
+    public void balanceTrfTest() throws Exception {
+        String custOneAccId = "Id-" + System.currentTimeMillis();
+        Account account = new Account(custOneAccId, new BigDecimal("123.45"));
+        this.accountsService.createAccount(account);
+
+
+        String custTwoAccId = "Id-" + System.currentTimeMillis();
+        Account account1 = new Account(custTwoAccId, new BigDecimal("123.45"));
+        this.accountsService.createAccount(account1);
+
+        this.mockMvc.perform(get("/v1/accounts/" +  custOneAccId+"/"+custTwoAccId+"/"+"10.5"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(
+                        containsString("Your transaction has been done, please find transaction number")
+                ));
     }
 
 }
